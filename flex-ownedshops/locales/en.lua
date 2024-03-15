@@ -46,6 +46,7 @@ local Translations = {
         whatprice = 'For much much in $ you want to sell %{value}?',
         setprice = 'Confirm',
         howmuch = 'How much $ per piece?',
+        priceperlabel = 'Price: %{value}',
     }
 }
 
