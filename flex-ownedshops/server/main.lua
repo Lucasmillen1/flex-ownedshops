@@ -1,3 +1,4 @@
+
 local QBCore = exports['qb-core']:GetCoreObject()
 
 QBCore.Functions.CreateCallback("flex-ownedshop:server:loadshop", function(source, cb, name)
@@ -133,92 +134,81 @@ RegisterNetEvent('flex-ownedshops:server:restock', function(itemname, amount, sh
     end
 end)
 
-RegisterNetEvent('flex-ownedshops:server:buy', function(itemname, itemamount, price, label, shopname, jobname, gangname)
+RegisterNetEvent('flex-ownedshops:server:buy', function(itemName, itemAmount, price, label, shopName, jobName, gangName)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
-    local BankMoney = Player.PlayerData.money['bank']
-    local CashMoneyMoney = Player.PlayerData.money['cash']
-    local shop = MySQL.prepare.await('SELECT stock FROM ownedshops WHERE shopname = ?', { shopname })
-    local owner = MySQL.prepare.await('SELECT owner FROM ownedshops WHERE shopname = ?', { shopname })
-    local target = nil
-    if owner then
-        Target = QBCore.Functions.GetOfflinePlayerByCitizenId(owner)
+    local totalCost = price * itemAmount
+
+    -- Check if the player has enough money
+    if Player.PlayerData.money['bank'] < totalCost and Player.PlayerData.money['cash'] < totalCost then
+        TriggerClientEvent('QBCore:Notify', src, Lang:t("error.broke"), 'error', 5000)
+        return
     end
-    local NewStock = {}
-    local HasMoney = false
-    local canbuy = false
-    if BankMoney >= price*itemamount and not HasMoney then
-        HasMoney = true
-        Player.Functions.RemoveMoney("bank", price*itemamount, itemname)
-    elseif CashMoneyMoney >= price*itemamount and not HasMoney then
-        HasMoney = true
-        Player.Functions.RemoveMoney("cash", price*itemamount, itemname)
+
+    -- Retrieve shop stock and owner
+    local shop = MySQL.prepare.await('SELECT stock, owner FROM ownedshops WHERE shopname = ?', { shopName })
+    local owner = shop.owner
+    local Target = QBCore.Functions.GetOfflinePlayerByCitizenId(owner)
+
+    -- Update shop stock
+    local newStock = {}
+    local items = json.decode(shop.stock)
+    for _, item in ipairs(items) do
+        if item.name == itemName then
+            if item.amount - itemAmount >= 0 then
+                newStock[#newStock + 1] = {
+                    name = itemName,
+                    amount = item.amount - itemAmount,
+                    price = item.price
+                }
+            end
+        else
+            newStock[#newStock + 1] = item
+        end
     end
-    if HasMoney then
+
+    -- Update player inventory and money
+    if #newStock > 0 then
+        MySQL.update.await("UPDATE ownedshops SET stock=? WHERE shopname=?", { json.encode(newStock), shopName })
+        Player.Functions.RemoveMoney("bank", totalCost, itemName)
+        Player.Functions.AddItem(itemName, itemAmount)
+        TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items[itemName], "add", itemAmount)
+        TriggerClientEvent('QBCore:Notify', src, Lang:t("success.successbuy", { value = itemAmount, value2 = label, value3 = totalCost }))
+
+        -- Handle banking based on configuration
         if Config.Banking == 'fd' then
-            if jobname then
-                exports.fd_banking:AddMoney(jobname, price*itemamount, itemname)
-            elseif gangname then
-                exports.fd_banking:AddMoney(gangname, price*itemamount, itemname)
+            if jobName then
+                exports.fd_banking:AddMoney(jobName, totalCost, itemName)
+            elseif gangName then
+                exports.fd_banking:AddMoney(gangName, totalCost, itemName)
             else
-                Target.Functions.AddMoney("bank", price*itemamount, itemname)
+                Target.Functions.AddMoney("bank", totalCost, itemName)
             end
         elseif Config.Banking == 'qb' then
-            if jobname then
-                exports['qb-management']:AddMoney(jobname, price*itemamount)
-            elseif gangname then
-                exports['qb-management']:AddMoney(gangname, price*itemamount)
-            else
-                Target.Functions.AddMoney("bank", price*itemamount, itemname)
-            end
-        else
-            Target.Functions.AddMoney("bank", price*itemamount, itemname)
-        end
-        if table.type(shop) ~= "empty" and shop then
-            local items = json.decode(shop)
-            if shop ~= '[]' then
-                for slot, item in pairs(items) do
-                    if items[slot] then
-                        if item.name == itemname then
-                            if tonumber(item.amount) - itemamount > 0 then
-                                NewStock[#NewStock+1] = {
-                                    name = itemname,
-                                    amount = tonumber(item.amount) - itemamount,
-                                    price = item.price
-                                }
-                            end
-                            canbuy = true
-                        else
-                            if tonumber(item.amount) > 0 then
-                                NewStock[#NewStock+1] = {
-                                    name = item.name,
-                                    amount = tonumber(item.amount),
-                                    price = item.price,
-                                }
-                            end
-                        end
-                    end
+            if Config.Management == 'old' then
+                if jobName then
+                    exports['qb-management']:AddMoney(jobName, totalCost)
+                elseif gangName then
+                    exports['qb-management']:AddMoney(gangName, totalCost)
+                else
+                    Target.Functions.AddMoney("bank", totalCost, itemName)
                 end
-            end
-        else
-            TriggerClientEvent('QBCore:Notify', src, Lang:t("error.error404item"), 'error', 5000)
-        end
-        if canbuy then
-            if rawequal(next(NewStock), nil) then
-               MySQL.update.await("UPDATE ownedshops SET stock=? WHERE shopname=?", {'[{}]', shopname})
+            elseif Config.Management == 'new' then
+                if jobName then
+                    exports['qb-banking']:AddMoney(jobName, totalCost)
+                elseif gangName then
+                    exports['qb-banking']:AddMoney(gangName, totalCost)
+                else
+                    Target.Functions.AddMoney("bank", totalCost, itemName)
+                end
             else
-                MySQL.update.await("UPDATE ownedshops SET stock=? WHERE shopname=?", {json.encode(NewStock), shopname})
-            end
-            if Player.Functions.AddItem(itemname, itemamount) then
-                TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items[itemname], "add", itemamount)
-                canbuy = false
-                TriggerClientEvent('QBCore:Notify', src, Lang:t("success.successbuy",{value = itemamount, value2 = label, value3 = (price * itemamount)}))
+                Target.Functions.AddMoney("bank", totalCost, itemName)
             end
         else
-            TriggerClientEvent('QBCore:Notify', src, Lang:t("error.error404item"), 'error', 5000)
+            Target.Functions.AddMoney("bank", totalCost, itemName)
         end
     else
-        TriggerClientEvent('QBCore:Notify', src, Lang:t("error.broke"), 'error', 5000)
+        TriggerClientEvent('QBCore:Notify', src, Lang:t("error.error404item"), 'error', 5000)
     end
 end)
 
