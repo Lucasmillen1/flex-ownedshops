@@ -3,6 +3,9 @@ Config.Debug = true
 Config.inventorylink = 'qb-inventory/html/images/' --Path of your inventory images
 
 Config.Banking = 'qb' -- fd for fd_banking / qb for qb-management
+
+Config.Management = 'new' -- new for qb-banking handling management, 'old' for old qb-management exports
+
 Config.Shops = {
     [1] = {
         shopname = '247shop1', -- Name of shop
