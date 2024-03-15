@@ -8,6 +8,17 @@ local PlayerJob = {}
 local PlayerGang = {}
 local onDuty = false
 
+function formatMoney(amount)
+    local formatted = amount
+    while true do
+        formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
+        if (k == 0) then
+            break
+        end
+    end
+    return formatted
+end
+
 AddEventHandler('onResourceStart', function(resource)
     if resource == GetCurrentResourceName() then
         PlayerJob = QBCore.Functions.GetPlayerData().job
@@ -274,20 +285,19 @@ RegisterNetEvent('flex-ownedshops:client:checkstock', function(data)
             }
             local itemlist = {}
             for _, v in pairs(json.decode(items)) do
-                if itemlist[v['name']] then
-                    itemlist[v['name']].amount = itemlist[v['name']].amount --+ tonumber(v['amount'])
+                if itemlist[v.name] then
+                    itemlist[v.name].amount = itemlist[v.name].amount + tonumber(v.amount)
                 else
-                    itemlist[v['name']] = {
-                        amount = tonumber(v['amount']),
-                        price = tonumber(v['price']),
+                    itemlist[v.name] = {
+                        amount = tonumber(v.amount),
+                        price = tonumber(v.price),
                     }
                 end
             end
             for k, v in pairs(itemlist) do
                 local item = {}
-                item.header = "<img src=nui://"..Config.inventorylink..QBCore.Shared.Items[k].image.." width=35px style='margin-right: 10px'> " .. QBCore.Shared.Items[k].label
-                local text = Lang:t("managemenu.amount")..v.amount..' </br> '..Lang:t("managemenu.price",{value = v.price})
-                item.text = text
+                item.header = "<img src=nui://" .. Config.inventorylink .. QBCore.Shared.Items[k].image .. " width=35px style='margin-right: 10px'> " .. QBCore.Shared.Items[k].label
+                local text = Lang:t("managemenu.amount") .. v.amount .. ' </br> ' .. Lang:t("managemenu.priceperlabel", {value = v.price})
                 item.params = {
                     event = 'flex-ownedshops:client:setprice',
                     args = {
@@ -401,7 +411,7 @@ function OpenShop(shopid, job, gang)
             for k, v in pairs(itemlist) do
                 local item = {}
                 item.header = "<img src=nui://"..Config.inventorylink..QBCore.Shared.Items[k].image.." width=35px style='margin-right: 10px'> " .. QBCore.Shared.Items[k].label
-                local text = Lang:t("managemenu.amount")..v.amount..' </br> '..Lang:t("managemenu.price",{value = v.price})
+                local text = Lang:t("managemenu.amount") .. v.amount .. ' </br> ' .. Lang:t("managemenu.priceperlabel", {value = '$' .. formatMoney(v.price)})
                 item.text = text
                 item.params = {
                     event = 'flex-ownedshops:client:buy',
@@ -427,7 +437,7 @@ exports('OpenShop', OpenShop)
 
 RegisterNetEvent('flex-ownedshops:client:buy', function(data)
     local buying = exports['qb-input']:ShowInput({
-        header = Lang:t('managemenu.buyamount', {value = data.label, value2 = (data.price * data.amount), value3 = data.amount}),
+        header = Lang:t('managemenu.buyamount', {value = data.label, value2 = '$' .. formatMoney(data.price), value3 = data.amount}),
         submitText = Lang:t('managemenu.buy'),
         inputs = {
             {
