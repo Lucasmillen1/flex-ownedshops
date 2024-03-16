@@ -9,7 +9,6 @@ local Translations = {
         nonegativeprice = 'The price cant be lower than 0..',
         broke = 'You dont have enough money..',
         buycantbezero = 'You cant buy 0..',
-        removeamountinvalid = 'Invalid removal amount',
     },
     success = {
         refillstock = 'You added %{value} x %{value2} to the stock',
@@ -17,7 +16,6 @@ local Translations = {
         successbuy = 'You bought %{value} x %{value2} for %{value3}',
         setprice = 'You put %{value} up for sale at %{value2}',
         boughtshop = 'You bought this shop for %{value}',
-        itemremoved = 'Removed %{value} x %{value2} from the shop',
     },
     info = {
         openshop = 'Open Shop',
@@ -48,16 +46,11 @@ local Translations = {
         whatprice = 'For much much you want to sell %{value}?',
         setprice = 'Confirm',
         howmuch = 'How much per piece?',
-        priceperlabel = 'Price: %{value}',
-        itemactions = 'Item Actions',
-        remove = 'Remove from Shop',
-        changeprice = 'Change Price',
-        removeitemheader = 'Remove %{value} from Shop',
-        removeall = "Remove All",
-    },
+        priceperlabel = "Price: %{value}"
+    }
 }
 
 Lang = Locale:new({
     phrases = Translations,
-    warnOnMissing = true,
+    warnOnMissing = true
 })
