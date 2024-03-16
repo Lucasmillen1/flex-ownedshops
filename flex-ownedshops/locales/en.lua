@@ -16,6 +16,7 @@ local Translations = {
         successbuy = 'You bought %{value} x %{value2} for %{value3}',
         setprice = 'You put %{value} up for sale at %{value2}',
         boughtshop = 'You bought this shop for %{value}',
+	removedstock = 'Removed from store'
     },
     info = {
         openshop = 'Open Shop',
@@ -24,6 +25,20 @@ local Translations = {
         onduty = 'You are on duty',
         offduty = 'You are off duty',
         emptyshop = 'This shop is empty..',
+    },
+    managefunds = {
+	header = 'Money Management',
+	deposit = 'Deposit cash',
+	withdraw = 'Withdraw cash',
+	close = 'Close',
+	depositdesc = 'Deposit cash into your shop',
+	withdrawdesc = 'Withdraw cash from your shop',
+	depositheader = 'Deposit Cash',
+	depositamount = 'How much are you putting in?',
+	depositsubmit = 'Deposit',
+	withdrawheader = 'Withdraw Cash',
+	withdrawamount = 'How much are you taking out?',
+	withdrawsubmit = 'Withdraw'
     },
     managemenu = {
         buyshopheader = 'You sure you want to buy this?',
@@ -46,7 +61,11 @@ local Translations = {
         whatprice = 'For much much you want to sell %{value}?',
         setprice = 'Confirm',
         howmuch = 'How much per piece?',
-        priceperlabel = "Price: %{value}"
+        priceperlabel = 'Price: %{value}',
+	removestock = 'Remove stock',
+	amountremove = 'Amount to remove',
+	removeamount = 'Take out of store',
+	managefunds = 'Bank'	
     }
 }
 
