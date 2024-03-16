@@ -87,30 +87,32 @@ function InitiateZones()
         end
 
         local mloc = vec3(v.manageloc.x, v.manageloc.y, v.manageloc.z)
-        ShopZones[#ShopZones..k] = BoxZone:Create(mloc, v.boxzone.depth, v.boxzone.width, {
+        ShopZones[#ShopZones+1] = BoxZone:Create(mloc, v.boxzone.depth, v.boxzone.width, {
             name = v.shopname..k..'manageloc',
             useZ = true,
             heading = v.manageloc.w,
             debugPoly = Config.Debug
         })
 
-        ShopZones[#ShopZones..k]:onPlayerInOut(function(isPointInside)
+        ShopZones[#ShopZones]:onPlayerInOut(function(isPointInside)
             isInEnterZone = isPointInside
             if isPointInside then
                 exports['qb-core']:DrawText('[E] - '..Lang:t("info.manageshop"), 'left')
                 CreateThread(function()
+                    Wait(500)
                     while isInEnterZone do
                         if IsControlJustReleased(0, 38) then
                             exports['qb-core']:KeyPressed()
                             exports['qb-core']:HideText()
                             QBCore.Functions.TriggerCallback('flex-ownedshop:server:isowner', function(owner)
-                                print(owner)
-                                if (owner == 2) or (v.isjob.name ~= false and PlayerJob.name == v.isjob.name and v.isjob.everyone)
-                                or (v.isjob.name ~= false and PlayerJob.name == v.isjob.name and PlayerJob.isboss)
-                                or (v.isgang.name ~= false and PlayerGang.name == v.isgang.name and not v.isgang.everyone and PlayerGang.isboss)
-                                or (v.isgang.name ~= false and PlayerGang.name == v.isgang.name and v.isgang.everyone) then
-                                    if onDuty or v.isgang.name ~= false or owner then
-                                        if v.isjob.everyone or v.isgang.everyone or owner then
+                                if owner == 2 then
+                                    -- Player is the owner
+                                    TriggerEvent('flex-ownedshops:client:manageshop', v.shopname)
+                                elseif (v.isjob.name ~= false) and (PlayerJob.name == v.isjob.name) and ((v.isjob.everyone) or (PlayerJob.isboss)) or
+                                       (v.isgang.name ~= false) and (PlayerGang.name == v.isgang.name) and ((v.isgang.everyone) or (PlayerGang.isboss)) then
+                                    -- Player meets the job/gang requirements
+                                    if onDuty or v.isgang.name ~= false then
+                                        if v.isjob.everyone or v.isgang.everyone then
                                             TriggerEvent('flex-ownedshops:client:manageshop', v.shopname)
                                         else
                                             if PlayerJob.isboss or PlayerGang.isboss then
@@ -122,9 +124,9 @@ function InitiateZones()
                                     else
                                         QBCore.Functions.Notify(Lang:t("error.notonduty"), "error", 4500)
                                     end
-                                elseif (owner == 0) and v.isjob.name == false and v.isgang.name == false then
-                                    print(v.shopprice)
-                                    TriggerEvent('flex-ownedshops:client:buyshop', v.shopname, v.shopprice)
+                                elseif owner == 0 and v.isjob.name == false and v.isgang.name == false then
+                                    -- Shop is not owned, and job/gang requirements are disabled
+                                    TriggerEvent('flex-ownedshops:client:manageshop', v.shopname)
                                 else
                                     QBCore.Functions.Notify(Lang:t("error.notworkinghere"), "error", 4500)
                                 end
@@ -296,7 +298,8 @@ RegisterNetEvent('flex-ownedshops:client:checkstock', function(data)
             end
             for k, v in pairs(itemlist) do
                 local item = {}
-                item.header = "<img src=nui://" .. Config.inventorylink .. QBCore.Shared.Items[k].image .. " width=35px style='margin-right: 10px'> " .. QBCore.Shared.Items[k].label
+                -- Include the stock amount next to the item name
+                item.header = "<img src=nui://" .. Config.inventorylink .. QBCore.Shared.Items[k].image .. " width=35px style='margin-right: 10px'> " .. QBCore.Shared.Items[k].label .. " (" .. v.amount .. ")"
                 local text = Lang:t("managemenu.amount") .. v.amount .. ' </br> ' .. Lang:t("managemenu.priceperlabel", {value = v.price})
                 item.params = {
                     event = 'flex-ownedshops:client:setprice',
@@ -358,11 +361,24 @@ RegisterNetEvent('flex-ownedshops:client:checkinv', function(data)
                 }
                 table.insert(inventory, item)
             end
+            
+            -- Add a Go Back option
+            table.insert(inventory, {
+                header = Lang:t("managemenu.goback"),
+                txt = "",
+                params = {
+                    event = "flex-ownedshops:client:manageshop",
+                    args = {
+                        shopname = data.shopname
+                    }
+                }
+            })
+
             exports['qb-menu']:openMenu(inventory)
         else
             QBCore.Functions.Notify(Lang:t("info.emptyshop"), "info", 4500)
         end
-    end)
+    end, data.shopname)
 end)
 
 RegisterNetEvent('flex-ownedshops:client:restock', function(data)
