@@ -35,7 +35,7 @@ This script allows players, jobs, or gangs to own and operate shops within QB-CO
 - Keep machines NIL until I have a chance to see why so many spawn. Use ped instead.
 - Working on adding an option to remove items from shop at anytime
 - Working on Email system when someone buys something from your shop
-- Working on adding optional Discord logging for all shop activites
+- Working on adding optional Discord logging for all shop activities
 - Open to other suggestions! Join the discord!
 
 Support & Suggestions:
