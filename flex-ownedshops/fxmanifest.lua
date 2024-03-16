@@ -1,7 +1,7 @@
 fx_version "bodacious"
 game "gta5"
 lua54 "yes"
-author "flexiboi"
+author "flexiboi - edited by Lucas Millen"
 description "Flex-ownedshops"
 version "1.0.0"
 
