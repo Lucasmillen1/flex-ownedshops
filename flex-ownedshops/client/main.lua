@@ -9,13 +9,17 @@ local PlayerGang = {}
 local onDuty = false
 
 function formatMoney(amount)
-    local formatted = amount
+    local formatted = tostring(amount)
+    
+    formatted = formatted:match("([^.]*).?")
+
     while true do
         formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
         if (k == 0) then
             break
         end
     end
+    
     return formatted
 end
 
@@ -106,11 +110,9 @@ function InitiateZones()
                             exports['qb-core']:HideText()
                             QBCore.Functions.TriggerCallback('flex-ownedshop:server:isowner', function(owner)
                                 if owner == 2 then
-                                    -- Player is the owner
                                     TriggerEvent('flex-ownedshops:client:manageshop', v.shopname)
                                 elseif (v.isjob.name ~= false) and (PlayerJob.name == v.isjob.name) and ((v.isjob.everyone) or (PlayerJob.isboss)) or
                                        (v.isgang.name ~= false) and (PlayerGang.name == v.isgang.name) and ((v.isgang.everyone) or (PlayerGang.isboss)) then
-                                    -- Player meets the job/gang requirements
                                     if onDuty or v.isgang.name ~= false then
                                         if v.isjob.everyone or v.isgang.everyone then
                                             TriggerEvent('flex-ownedshops:client:manageshop', v.shopname)
@@ -125,7 +127,6 @@ function InitiateZones()
                                         QBCore.Functions.Notify(Lang:t("error.notonduty"), "error", 4500)
                                     end
                                 elseif owner == 0 and v.isjob.name == false and v.isgang.name == false then
-                                    -- Shop is not owned, and job/gang requirements are disabled
                                     TriggerEvent('flex-ownedshops:client:manageshop', v.shopname)
                                 else
                                     QBCore.Functions.Notify(Lang:t("error.notworkinghere"), "error", 4500)
@@ -266,6 +267,26 @@ RegisterNetEvent('flex-ownedshops:client:manageshop', function(shopid)
             }
         },
         {
+            header = Lang:t("managemenu.removestock"),
+            icon = "fa-solid fa-list",
+            params = {
+                event = "flex-ownedshops:client:removestock",
+                args = {
+                    shopname = shopid
+                },
+            }
+        },
+        {
+            header = Lang:t("managemenu.managefunds"),
+            icon = "fa-solid fa-money-bill-wave",
+            params = {
+                event = "flex-ownedshops:client:managefunds",
+                args = {
+                    shopname = shopid
+                },
+            }
+        },
+        {
             header = Lang:t("managemenu.close"),
             icon = "fa-solid fa-angle-left",
             params = {
@@ -273,8 +294,127 @@ RegisterNetEvent('flex-ownedshops:client:manageshop', function(shopid)
             }
         },
     }
+
     exports['qb-menu']:openMenu(ManagementMenu)
 end)
+
+RegisterNetEvent('flex-ownedshops:client:managefunds')
+AddEventHandler('flex-ownedshops:client:managefunds', function(args)
+    if args and args.shopname then
+        local shopname = args.shopname
+
+        TriggerServerEvent('flex-ownedshops:server:getAccountBalance', shopname)
+
+        local currentBalance = nil
+
+        RegisterNetEvent('flex-ownedshops:client:updateAccountBalance')
+        AddEventHandler('flex-ownedshops:client:updateAccountBalance', function(balance)
+            currentBalance = balance
+
+            local formattedBalance = formatMoney(currentBalance)
+
+            local headerString = Lang:t("managefunds.header", { shopname = shopname }) .. " - $" .. formattedBalance
+
+            local manageFundsMenu = {
+                {
+                    header = headerString,
+                    isMenuHeader = true,
+                },
+                {
+                    header = Lang:t("managefunds.deposit"),
+                    txt = Lang:t("managefunds.depositdesc"),
+                    params = {
+                        event = "flex-ownedshops:client:depositfunds",
+                        args = {
+                            shopname = shopname
+                        },
+                    }
+                },
+                {
+                    header = Lang:t("managefunds.withdraw"),
+                    txt = Lang:t("managefunds.withdrawdesc"),
+                    params = {
+                        event = "flex-ownedshops:client:withdrawfunds",
+                        args = {
+                            shopname = shopname
+                        },
+                    }
+                },
+                {
+                    header = Lang:t("managefunds.close"),
+                    params = {
+                        event = "qb-menu:closeMenu",
+                    }
+                },
+            }
+
+            exports['qb-menu']:openMenu(manageFundsMenu)
+        end)
+    end
+end)
+
+RegisterNetEvent('flex-ownedshops:client:withdrawfunds')
+AddEventHandler('flex-ownedshops:client:withdrawfunds', function(args)
+    if args and args.shopname then
+        local shopname = args.shopname
+
+        local withdraw = exports['qb-input']:ShowInput({
+            header = Lang:t("managefunds.withdrawheader", {shopname = shopname}),
+            submitText = Lang:t("managefunds.withdrawsubmit"),
+            inputs = {
+                {
+                    text = Lang:t("managefunds.withdrawamount"),
+                    name = "amount", 
+                    type = "number", 
+                    isRequired = true,
+                },
+            }
+        })
+
+        if withdraw then
+            local amount = tonumber(withdraw.amount)
+            if amount and amount > 0 then
+                TriggerServerEvent('flex-ownedshops:server:withdrawfunds', shopname, amount)
+            else
+                QBCore.Functions.Notify(Lang:t("error.invalidamount"), "error")
+            end
+        end
+    else
+        print("Error: No shopname provided in args.")
+    end
+end)
+
+RegisterNetEvent('flex-ownedshops:client:depositfunds')
+AddEventHandler('flex-ownedshops:client:depositfunds', function(args)
+    if args and args.shopname then
+        local shopname = args.shopname
+
+        local deposit = exports['qb-input']:ShowInput({
+            header = Lang:t("managefunds.depositheader", {shopname = shopname}),
+            submitText = Lang:t("managefunds.depositsubmit"),
+            inputs = {
+                {
+                    text = Lang:t("managefunds.depositamount"),
+                    name = "amount", 
+                    type = "number", 
+                    isRequired = true,
+                },
+            }
+        })
+
+        if deposit then
+            if tonumber(deposit.amount) > 0 then
+                TriggerServerEvent('flex-ownedshops:server:depositfunds', shopname, tonumber(deposit.amount))
+            else
+                QBCore.Functions.Notify(Lang:t("error.invalidamount"), "error")
+            end
+        end
+    else
+        print("Error: No shopname provided in args.")
+    end
+end)
+
+
 
 RegisterNetEvent('flex-ownedshops:client:checkstock', function(data)
     QBCore.Functions.TriggerCallback('flex-ownedshop:server:loadshop', function(items)
@@ -290,17 +430,22 @@ RegisterNetEvent('flex-ownedshops:client:checkstock', function(data)
                 if itemlist[v.name] then
                     itemlist[v.name].amount = itemlist[v.name].amount + tonumber(v.amount)
                 else
-                    itemlist[v.name] = {
-                        amount = tonumber(v.amount),
-                        price = tonumber(v.price),
-                    }
+                    local price = tonumber(v.price)
+                    if price ~= nil then 
+                        itemlist[v.name] = {
+                            amount = tonumber(v.amount),
+                            price = price,
+                        }
+                    else
+                        itemlist[v.name] = {
+                            amount = tonumber(v.amount),
+                        }
+                    end
                 end
             end
             for k, v in pairs(itemlist) do
                 local item = {}
-                -- Include the stock amount next to the item name
                 item.header = "<img src=nui://" .. Config.inventorylink .. QBCore.Shared.Items[k].image .. " width=35px style='margin-right: 10px'> " .. QBCore.Shared.Items[k].label .. " (" .. v.amount .. ")"
-                local text = Lang:t("managemenu.amount") .. v.amount .. ' </br> ' .. Lang:t("managemenu.priceperlabel", {value = v.price})
                 item.params = {
                     event = 'flex-ownedshops:client:setprice',
                     args = {
@@ -362,7 +507,6 @@ RegisterNetEvent('flex-ownedshops:client:checkinv', function(data)
                 table.insert(inventory, item)
             end
             
-            -- Add a Go Back option
             table.insert(inventory, {
                 header = Lang:t("managemenu.goback"),
                 txt = "",
@@ -403,6 +547,79 @@ RegisterNetEvent('flex-ownedshops:client:restock', function(data)
         end
     end
 end)
+
+RegisterNetEvent('flex-ownedshops:client:removestock', function(data)
+    QBCore.Functions.TriggerCallback('flex-ownedshop:server:loadshop', function(items)
+        if items then
+            local inventory = {
+                {
+                    header = Lang:t("managemenu.removestock"),
+                    isMenuHeader = true,
+                },
+            }
+            local itemlist = {}
+            for _, v in pairs(json.decode(items)) do
+                if itemlist[v.name] then
+                    itemlist[v.name].amount = itemlist[v.name].amount + tonumber(v.amount)
+                else
+                    itemlist[v.name] = {
+                        amount = tonumber(v.amount),
+                        price = tonumber(v.price),
+                    }
+                end
+            end
+            for k, v in pairs(itemlist) do
+                local item = {}
+                item.header = "<img src=nui://" .. Config.inventorylink .. QBCore.Shared.Items[k].image .. " width=35px style='margin-right: 10px'> " .. QBCore.Shared.Items[k].label .. " (" .. v.amount .. ")"
+                item.params = {
+                    event = 'flex-ownedshops:client:removeamount',
+                    args = {
+                        item = k,
+                        shopname = data.shopname,
+                        amount = v.amount,
+                    }
+                }
+                table.insert(inventory, item)
+            end
+            local goback = {
+                header = Lang:t("managemenu.goback"),
+                icon = "fa-solid fa-angle-left",
+                params = {
+                    event = 'flex-ownedshops:client:manageshop',
+                    args = data.shopname
+                }
+            }
+            table.insert(inventory, goback)
+            exports['qb-menu']:openMenu(inventory)
+        else
+            QBCore.Functions.Notify(Lang:t("info.emptyshop"), "info", 4500)
+        end
+    end, data.shopname)
+end)
+
+RegisterNetEvent('flex-ownedshops:client:removeamount', function(data)
+    local remove = exports['qb-input']:ShowInput({
+        header = Lang:t('managemenu.removeamount', {value = QBCore.Shared.Items[data.item].label, value2 = data.amount}),
+        submitText = Lang:t('managemenu.confirm'),
+        inputs = {
+            {
+                type = 'number',
+                isRequired = true,
+                name = 'amount',
+                text = Lang:t('managemenu.amountremove')
+            }
+        }
+    })
+    if remove then
+        if tonumber(data.amount) >= tonumber(remove.amount) then
+            TriggerServerEvent('flex-ownedshops:server:removestock', data.item, remove.amount, data.shopname)
+        else
+            QBCore.Functions.Notify(Lang:t("error.notenooughstock"), "error", 4500)
+        end
+    end
+end)
+
+
 
 function OpenShop(shopid, job, gang)
     QBCore.Functions.TriggerCallback('flex-ownedshop:server:loadshop', function(items)
@@ -477,7 +694,8 @@ RegisterNetEvent('flex-ownedshops:client:buy', function(data)
     end
 end)
 
-RegisterNetEvent('flex-ownedshops:client:setprice', function(data)
+RegisterNetEvent('flex-ownedshops:client:setprice')
+AddEventHandler('flex-ownedshops:client:setprice', function(data)
     local price = exports['qb-input']:ShowInput({
         header = Lang:t('managemenu.whatprice', {value =  QBCore.Shared.Items[data.item].label}),
         submitText = Lang:t('managemenu.setprice'),
@@ -493,11 +711,9 @@ RegisterNetEvent('flex-ownedshops:client:setprice', function(data)
     if price then
         if tonumber(price.amount) >= 0 then
             TriggerServerEvent('flex-ownedshops:server:setprice', data.item, price.amount, data.shopname)
-            QBCore.Functions.Notify(Lang:t("success.setprice",{value =  QBCore.Shared.Items[data.item].label, value2 = price.amount}), "success", 4500)
         else
             QBCore.Functions.Notify(Lang:t("error.nonegativeprice"), "error", 4500)
         end
-        TriggerEvent('flex-ownedshops:client:manageshop', data.shopname)
     end
 end)
 
