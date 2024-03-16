@@ -31,7 +31,7 @@ This script allows players, jobs, or gangs to own and operate shops within QB-CO
 
 **Translations**
 
-- This script is available in English, Dutch, and Turkish
+- This script is available in English, working on more translations! 
 
 **Notes**
 - Keep machines NIL until I have a chance to see why so many spawn. Use ped instead.
