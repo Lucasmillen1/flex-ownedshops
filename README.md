@@ -7,14 +7,16 @@ This script allows players, jobs, or gangs to own and operate shops within QB-CO
 **Features**
 
 - Players can add items to their shops and set prices!
-- Shops need to be purchased if not obtained through a gang or job!
+- Shops need to be purchased if not obtained through a gang or job! (currently only job is tested)
 - Businesses can now sell product even if they are on vacation!
+- Set your shop to have money deposited into its own bank account or use your society's!
 
 **Shop Customization:**
 
 - Toggle duty spot
 - Access point for buyers (can be targeted or not, with or without a prop)
 - Management/buying location
+- Money Management
 
 **Compatibility**
 
@@ -29,7 +31,7 @@ This script allows players, jobs, or gangs to own and operate shops within QB-CO
 
 **Translations**
 
-- This script is available in both Dutch and English.
+- This script is available in English, Dutch, and Turkish
 
 **Notes**
 - Keep machines NIL until I have a chance to see why so many spawn. Use ped instead.
