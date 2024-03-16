@@ -2,17 +2,21 @@ Config = {}
 Config.Debug = true
 Config.inventorylink = 'qb-inventory/html/images/' --Path of your inventory images
 
-Config.Banking = 'qb' -- fd for fd_banking / qb for qb-management
+Config.Banking = 'qb' -- fd for fd_banking / qb for banking
 
-Config.Management = 'new' -- new for qb-banking handling management, 'old' for old qb-management exports
+Config.Management = 'new' -- 'new' for qb-banking handling management, 'old' for qb-management
+
+
+-- Still working on getting none job/gang shops to work, please only use shop with job name.
+-- Use ped models, having issues with vending machines endlessly spawning 
 
 Config.Shops = {
     [1] = {
-        shopname = '247shop1', -- Name of shop
+        shopname = 'testing', -- Name of shop
         shopprice = 1000, -- Price of this shop. When it is gang or job owned no need for price
-        manageloc = vector4(-212.09, -623.44, 48.24, 235.23), -- Place where you manage the shop
-        buyloc = vector4(-211.51, -628.22, 48.23, 185.6), -- Location to buy from shop
-        target = true, -- If true it will spawn a vendingmachine at buyloc to target on
+        manageloc = vector4(-321.62, 6193.39, 31.48, 249), -- Place where you manage the shop
+        buyloc = vector4(-314.82, 6200.14, 31.51, 339), -- Location to buy from shop
+        target = false, -- leave this false for now! If true it will spawn a vendingmachine at buyloc to target on
         isjob = {
             name = 'police', -- false to disable job
             everyone = true, -- true if all ranks can access
@@ -43,14 +47,14 @@ Config.Shops = {
     },
     [2] = {
         shopname = '247shop2', -- Name of shop
-        shopprice = 1000, -- Price of this shop. When it is gang or job owned no need for price
-        manageloc = vector4(-183.15, -629.38, 48.67, 232.06), -- Place where you manage the shop
-        buyloc = vector4(-186.72, -627.37, 48.67, 290.47), -- Location to buy from shop
-        target = true, -- If true it will spawn a vendingmachine at buyloc to target on
+        shopprice = 50000, -- Price of this shop. When it is gang or job owned no need for price
+        manageloc = vector4(-305.25, 6211.41, 31.48, 214), -- Place where you manage the shop
+        buyloc = vector4(-310.05, 6207.30, 31.44, 220), -- Location to buy from shop
+        target = false, -- leave this false for now! If true it will spawn a vendingmachine at buyloc to target on
         isjob = {
-            name = 'police', -- false to disable job
+            name = 'false', -- false to disable job (not working right now)
             everyone = true, -- true if all ranks can access
-            dutyloc = vector4(-192.87, -628.66, 48.67, 238.64), -- nil to disable
+            dutyloc = nil, -- nil to disable
         },
         isgang = {
             name = false, -- false to disable gang
