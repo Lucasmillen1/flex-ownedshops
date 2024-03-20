@@ -7,6 +7,8 @@
 ![addstock](https://github.com/Lucasmillen1/flex-ownedshops/assets/145896347/39de9d98-4acd-48f4-9d24-fb03f988d344)
 
 
+** IF UPDATING PLEASE REPLACE SQL WITH NEW ONE IN RELEASE ** 
+
 This script allows players, jobs, or gangs to own and operate shops within QB-CORE.
 
 **All credits to Flexiboi for the original script, with additional code and fixes implemented by me. Original script can be found here (https://github.com/Flexiboi/flex-ownedshops)**
